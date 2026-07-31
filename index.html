@@ -1197,19 +1197,6 @@ function onTypingComplete(){
   if(playState.auto){ scheduleAuto(); }
 }
 
-function skipTyping(){
-  if(playState.typing){
-    clearInterval(playState.typing); playState.typing=null;
-    if(playState.mode==='reaction'){
-      document.getElementById('dText').textContent = playState.pendingReaction||'';
-    } else {
-      document.getElementById('dText').textContent = currentScene().text||'';
-      if(currentScene().type==='choice'){ showChoices(); }
-    }
-    return true;
-  }
-  return false;
-}
 
 function showChoices(){
   const scene=currentScene();
