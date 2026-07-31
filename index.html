@@ -1101,12 +1101,25 @@ function renderScene(){
   const bgImg = scene.bg || playState.ep.bgDefault || '';
   document.getElementById('stageBg').style.backgroundImage = bgImg ? `url('${bgImg}')` : `url('${ph('배경 없음', 780, 1200)}')`;
 
-  // [버그 수정 2] 캐릭터 스탠딩 이미지 자동 연동 및 우선순위 적용
+  
+   // [캐릭터 스탠딩 완전 연동] 표정 지정 -> 기본 스탠딩 순 출력 (프로필 초상화 사용 안 함)
   const charEl = document.getElementById('stageChar');
   const ch = scene.character ? getChar(scene.character) : null;
-
+  
   if(ch || scene.character) {
-    const standingImg = (scene.charImage || (ch && ch.image)) || '';
+    let standingImg = '';
+    
+    if(ch) {
+      // 1. 특정 표정이 지정된 경우
+      if(scene.expression && ch.standings){
+        const matched = ch.standings.find(st => st.id === scene.expression);
+        if(matched && matched.image) standingImg = matched.image;
+      }
+      // 2. 표정 지정이 없거나 못 찾은 경우 필수 '기본 스탠딩(defaultStanding)' 출력
+      if(!standingImg){
+        standingImg = ch.defaultStanding || '';
+      }
+    }
 
     if(standingImg) {
       charEl.style.backgroundImage = `url('${standingImg}')`;
@@ -1119,6 +1132,7 @@ function renderScene(){
     charEl.classList.add('hidden-char');
     charEl.style.backgroundImage = 'none';
   }
+
 
   // [버그 수정 3-2] 화자 이름 연동 ('나' -> 주인공 이름)
   const speakerName = displayName(scene.speaker);
@@ -1385,30 +1399,125 @@ function editChar(id){
   renderCharForm(id);
 }
 function renderCharForm(id){
-  const ch = id ? getChar(id) : {id:null,name:'',age:'',height:'',image:'',intro:'',worldview:''};
-  const formHtml=`
-    <div class="section-title">${id?'캐릭터 수정':'새 캐릭터'}</div>
-    <div class="field"><label>초상화 업로드</label>
-      <label class="upload-box" id="cf_uploadBox" for="cf_imageInput" style="background-image:url('${ch.image||''}')">
-        <span>이미지 선택</span>
-        <input type="file" id="cf_imageInput" accept="image/*" onchange="handleCharImageUpload(event)">
-      </label>
+/* ---------- Characters (초상화/스탠딩 완전 분리 & 기본 스탠딩 필수) ---------- */
+function renderCharForm(id){
+  const ch = id ? getChar(id) : {id:null, name:'', age:'', height:'', image:'', defaultStanding:'', standings:[], intro:'', worldview:''};
+  if(!ch.standings) ch.standings = [];
+
+  // 추가 표정 목록 HTML 생성
+  const standingsHtml = ch.standings.map((st, idx) => `
+    <div class="standing-item-row" id="st_row_${idx}" style="background:var(--bg-panel); padding:10px; border-radius:10px; border:1px solid var(--line); margin-bottom:8px;">
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+        <input type="text" class="st-name" value="${st.name || ''}" placeholder="표정 이름 (예: 웃음, 화남)" style="flex:1;">
+        <button type="button" class="btn-outline btn-danger" style="width:auto; padding:6px 10px; margin:0;" onclick="removeStandingRow(${idx})">삭제</button>
+      </div>
+      <div class="upload-box st-upload-box" id="st_box_${idx}" style="background-image:url('${st.image || ''}'); height:80px;">
+        <span>표정 스탠딩 선택</span>
+        <input type="file" accept="image/*" onchange="handleImageUpload(event)">
+      </div>
     </div>
+  `).join('');
+
+  const formHtml = `
+    <div class="section-title">${id ? '캐릭터 수정' : '새 캐릭터'}</div>
+    
+    <div class="field">
+      <label>프로필 초상화 (목록/프로필 팝업용)</label>
+      <div class="upload-box" id="cf_uploadBox" style="background-image:url('${ch.image || ''}')">
+        <span>초상화 선택</span>
+        <input type="file" accept="image/*" onchange="handleImageUpload(event)">
+      </div>
+    </div>
+
+    <div class="field">
+      <label style="color:var(--gold);">★ 기본 스탠딩 일러스트 (게임 화면 기본 연동 - 필수)</label>
+      <div class="upload-box" id="cf_defaultStandingBox" style="background-image:url('${ch.defaultStanding || ''}'); border-color:var(--gold);">
+        <span>기본 스탠딩 선택 (필수)</span>
+        <input type="file" accept="image/*" onchange="handleImageUpload(event)">
+      </div>
+    </div>
+
     <div class="field-row">
       <div class="field"><label>이름</label><input type="text" id="cf_name" value="${ch.name}"></div>
       <div class="field" style="max-width:70px;"><label>나이</label><input type="number" id="cf_age" value="${ch.age}"></div>
-      <div class="field" style="max-width:90px;"><label>키</label><input type="text" id="cf_height" placeholder="예: 172cm" value="${ch.height||''}"></div>
+      <div class="field" style="max-width:90px;"><label>키</label><input type="text" id="cf_height" placeholder="예: 172cm" value="${ch.height || ''}"></div>
     </div>
-    <div class="field"><label>소개글</label><textarea id="cf_intro">${ch.intro||''}</textarea></div>
-    <div class="field"><label>세계관 정보</label><textarea id="cf_worldview" placeholder="이 캐릭터와 관련된 설정, 배경, 세계관 정보를 적어주세요.">${ch.worldview||''}</textarea></div>
-    <button class="btn-main" onclick="saveChar('${id||''}')">저장</button>
+
+    <div class="section-title" style="margin-top:16px;">추가 표정 스탠딩 (선택)</div>
+    <div id="standingsContainer">${standingsHtml}</div>
+    <button type="button" class="btn-outline" style="margin-bottom:14px;" onclick="addStandingRow()">+ 추가 표정 등록</button>
+
+    <div class="field"><label>소개글</label><textarea id="cf_intro">${ch.intro || ''}</textarea></div>
+    <div class="field"><label>세계관 정보</label><textarea id="cf_worldview">${ch.worldview || ''}</textarea></div>
+    <button class="btn-main" onclick="saveChar('${id || ''}')">저장</button>
   `;
-  document.getElementById('charForm').innerHTML=formHtml;
-  // 이미지 데이터를 dataset에 명시적으로 초기화해둔다.
-  // (이전에는 저장 시 style.backgroundImage 문자열을 파싱해 복원했는데, 이 방식이 실패하면
-  //  업로드한 이미지가 저장되지 않는 오류로 이어졌다. 이제는 dataset.value 하나만을 항상 신뢰한다.)
-  document.getElementById('cf_uploadBox').dataset.value = ch.image || '';
+  document.getElementById('charForm').innerHTML = formHtml;
 }
+
+function addStandingRow(){
+  const container = document.getElementById('standingsContainer');
+  const idx = container.children.length;
+  const div = document.createElement('div');
+  div.className = 'standing-item-row';
+  div.id = `st_row_${idx}`;
+  div.style.cssText = 'background:var(--bg-panel); padding:10px; border-radius:10px; border:1px solid var(--line); margin-bottom:8px;';
+  div.innerHTML = `
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+      <input type="text" class="st-name" value="" placeholder="표정 이름 (예: 웃음, 화남)" style="flex:1;">
+      <button type="button" class="btn-outline btn-danger" style="width:auto; padding:6px 10px; margin:0;" onclick="removeStandingRow(${idx})">삭제</button>
+    </div>
+    <div class="upload-box st-upload-box" id="st_box_${idx}" style="background-image:url(''); height:80px;">
+      <span>표정 스탠딩 선택</span>
+      <input type="file" accept="image/*" onchange="handleImageUpload(event)">
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function removeStandingRow(idx){
+  const el = document.getElementById(`st_row_${idx}`);
+  if(el) el.remove();
+}
+
+function saveChar(id){
+  const name = document.getElementById('cf_name').value.trim();
+  const age = document.getElementById('cf_age').value.trim();
+  const height = document.getElementById('cf_height').value.trim();
+  const intro = document.getElementById('cf_intro').value;
+  const worldview = document.getElementById('cf_worldview').value;
+  
+  const uploadBox = document.getElementById('cf_uploadBox');
+  const image = readUploadValue(uploadBox);
+
+  const defaultStandingBox = document.getElementById('cf_defaultStandingBox');
+  const defaultStanding = readUploadValue(defaultStandingBox);
+
+  if(!name){ toast('이름을 입력하세요'); return; }
+  if(!defaultStanding){ toast('기본 스탠딩 이미지를 등록해야 합니다'); return; }
+
+  // 추가 표정 수집
+  const standings = [];
+  const rows = document.querySelectorAll('.standing-item-row');
+  rows.forEach((row, i) => {
+    const stName = row.querySelector('.st-name').value.trim() || `표정 ${i+1}`;
+    const stBox = row.querySelector('.st-upload-box');
+    const stImg = readUploadValue(stBox);
+    if(stImg) standings.push({ id: 'st_' + i, name: stName, image: stImg });
+  });
+
+  if(id){
+    const ch = getChar(id);
+    ch.name = name; ch.age = age; ch.height = height; ch.intro = intro; ch.worldview = worldview;
+    ch.image = image; ch.defaultStanding = defaultStanding; ch.standings = standings;
+  } else {
+    DB.characters.push({ id: uid('c'), name, age, height, intro, worldview, image: image||'', defaultStanding, standings });
+  }
+  saveData();
+  adminState._showCharForm = false;
+  renderAdminChars();
+  toast('저장되었습니다');
+}
+
 /* 캐릭터 초상화 업로드 전용 핸들러.
    <label for="cf_imageInput">로 input과 연결되어 있어 박스의 어느 지점을 클릭해도
    파일 선택창이 확실히 열리며(브라우저 표준 라벨-폼컨트롤 연결), 선택한 파일은
@@ -1752,27 +1861,130 @@ function editScene(sceneId){
     <button class="btn-main" onclick="saveScene('${sceneId||''}')">저장</button>
   `;
   document.getElementById('sceneForm').innerHTML=html;
+  updateExpressionSelect(sc.character, sc.expression);
 }
+
+function updateExpressionSelect(charId, selectedExpr){
+  const exprSelect = document.getElementById('sf_expression');
+  if(!exprSelect) return;
+  exprSelect.innerHTML = '<option value="">기본 스탠딩</option>';
+  
+  const ch = getChar(charId);
+  if(ch && ch.standings && ch.standings.length > 0){
+    ch.standings.forEach(st => {
+      const opt = document.createElement('option');
+      opt.value = st.id;
+      opt.textContent = st.name;
+      if(st.id === selectedExpr) opt.selected = true;
+      exprSelect.appendChild(opt);
+    });
+  }
+}
+
 function toggleSceneChoiceFields(){
   const isChoice=document.getElementById('sf_type').value==='choice';
-  document.getElementById('sf_choiceBlock').style.display = isChoice?'block':'none';
+function editScene(sceneId){
+  adminState.editingSceneId = sceneId;
+  const ep = getEp(adminState.editingEpId);
+  const sc = sceneId ? ep.scenes.find(s=>s.id===sceneId) : {type:'dialogue', bg:'', character:'', expression:'', speaker:'', text:'', options:[{text:'',score:2,reaction:''},{text:'',score:1,reaction:''},{text:'',score:0,reaction:''}]};
+  
+  const charOptions = `<option value="">(없음)</option>` + (ep.characters||[]).map(cid => {
+    const c = getChar(cid); if(!c) return '';
+    return `<option value="${cid}" ${sc.character===cid?'selected':''}>${c.name}</option>`;
+  }).join('');
+
+  const isChoice = sc.type === 'choice';
+  const opts = sc.options && sc.options.length===3 ? sc.options : [{text:'',score:2,reaction:''},{text:'',score:1,reaction:''},{text:'',score:0,reaction:''}];
+  const optLabels = ['A','B','C'];
+
+  const html = `
+    <div class="section-title">${sceneId ? '장면 수정' : '새 장면'}</div>
+    <div class="field"><label>장면 유형</label>
+      <select id="sf_type" onchange="toggleSceneChoiceFields()">
+        <option value="dialogue" ${!isChoice?'selected':''}>대사</option>
+        <option value="choice" ${isChoice?'selected':''}>선택지 (3개)</option>
+      </select>
+    </div>
+    <div class="field"><label>배경 이미지</label>
+      <div class="upload-box" style="background-image:url('${sc.bg||''}')" id="sf_bgbox">
+        <span>배경 선택</span><input type="file" accept="image/*" onchange="handleImageUpload(event)">
+      </div>
+    </div>
+    <div class="field"><label>등장 캐릭터</label>
+      <select id="sf_char" onchange="updateExpressionSelect(this.value, '${sc.expression||''}')">${charOptions}</select>
+    </div>
+    <div class="field" id="sf_expr_wrapper"><label>캐릭터 표정 / 스탠딩</label>
+      <select id="sf_expression"><option value="">기본 스탠딩</option></select>
+    </div>
+    <div class="field"><label>화자 이름</label><input type="text" id="sf_speaker" value="${sc.speaker||''}"></div>
+    <div class="field"><label>대사 / 지문 텍스트</label><textarea id="sf_text">${sc.text||''}</textarea></div>
+    <div id="sf_choiceBlock" style="display:${isChoice?'block':'none'}">
+      <div class="section-title">선택지 (점수: +2 / +1 / +0)</div>
+      ${opts.map((o,i)=>`<div style="margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line);">
+        <div style="font-size:11px;color:var(--gold);margin-bottom:6px;">선택지 ${optLabels[i]}</div>
+        <div class="opt-row">
+          <input type="text" id="sf_opt_text_${i}" value="${o.text||''}">
+          <input type="number" id="sf_opt_score_${i}" value="${o.score}">
+        </div>
+        <textarea id="sf_opt_reaction_${i}" style="margin-top:6px;min-height:48px;">${o.reaction||''}</textarea>
+      </div>`).join('')}
+    </div>
+    <button class="btn-main" onclick="saveScene('${sceneId||''}')">저장</button>
+  `;
+  document.getElementById('sceneForm').innerHTML = html;
+  updateExpressionSelect(sc.character, sc.expression);
 }
+
+function updateExpressionSelect(charId, selectedExpr){
+  const exprSelect = document.getElementById('sf_expression');
+  if(!exprSelect) return;
+  exprSelect.innerHTML = '<option value="">기본 스탠딩</option>';
+  
+  const ch = getChar(charId);
+  if(ch && ch.standings && ch.standings.length > 0){
+    ch.standings.forEach(st => {
+      const opt = document.createElement('option');
+      opt.value = st.id;
+      opt.textContent = st.name;
+      if(st.id === selectedExpr) opt.selected = true;
+      exprSelect.appendChild(opt);
+    });
+  }
+}
+
 function saveScene(sceneId){
-  const ep=getEp(adminState.editingEpId);
-  const type=document.getElementById('sf_type').value;
-  const bgBox=document.getElementById('sf_bgbox');
-  const bg=readUploadValue(bgBox);
-  const character=document.getElementById('sf_char').value;
-  const speaker=document.getElementById('sf_speaker').value;
-  const text=document.getElementById('sf_text').value;
-  let options=null;
-  if(type==='choice'){
-    options=[0,1,2].map(i=>({
-      text:document.getElementById('sf_opt_text_'+i).value || `선택지 ${i+1}`,
-      score:parseInt(document.getElementById('sf_opt_score_'+i).value)||0,
-      reaction:document.getElementById('sf_opt_reaction_'+i).value || ''
+  const ep = getEp(adminState.editingEpId);
+  const type = document.getElementById('sf_type').value;
+  const bgBox = document.getElementById('sf_bgbox');
+  const bg = readUploadValue(bgBox);
+  const character = document.getElementById('sf_char').value;
+  const expression = document.getElementById('sf_expression').value;
+  const speaker = document.getElementById('sf_speaker').value;
+  const text = document.getElementById('sf_text').value;
+
+  let options = null;
+  if(type === 'choice'){
+    options = [0,1,2].map(i => ({
+      text: document.getElementById('sf_opt_text_'+i).value || `선택지 ${i+1}`,
+      score: parseInt(document.getElementById('sf_opt_score_'+i).value) || 0,
+      reaction: document.getElementById('sf_opt_reaction_'+i).value || ''
     }));
   }
+
+  if(sceneId){
+    const sc = ep.scenes.find(s => s.id === sceneId);
+    sc.type = type; if(bg) sc.bg = bg; sc.character = character; sc.expression = expression; sc.speaker = speaker; sc.text = text;
+    if(type === 'choice') sc.options = options; else delete sc.options;
+  } else {
+    const newScene = { id: uid('sc'), type, bg: bg||'', character, expression, speaker, text };
+    if(type === 'choice') newScene.options = options;
+    ep.scenes.push(newScene);
+  }
+  saveData();
+  renderAdminScenes();
+  toast('장면이 저장되었습니다');
+}
+
   if(sceneId){
     const sc=ep.scenes.find(s=>s.id===sceneId);
     sc.type=type; if(bg) sc.bg=bg; sc.character=character; sc.speaker=speaker; sc.text=text;
