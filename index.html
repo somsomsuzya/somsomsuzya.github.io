@@ -179,6 +179,67 @@ body{
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0px var(--line);
 }
+/* ---------- WARNING SCREEN ---------- */
+#screen-warning {
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+  z-index: 100;
+}
+.warning-box {
+  border: 2px solid #ff3344;
+  box-shadow: 0 0 15px rgba(255, 51, 68, 0.4);
+  background: rgba(15, 0, 5, 0.92);
+  padding: 24px 20px;
+  max-width: 380px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: pulseBorder 2s infinite alternate;
+}
+.warning-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff3344;
+  text-shadow: 2px 2px #550000, -1px -1px #ff8899;
+  letter-spacing: 0.1em;
+  font-family: 'DungGeunMo', sans-serif;
+  animation: glitchText 1.5s infinite;
+}
+.warning-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #ffccd0;
+  text-align: left;
+  word-break: keep-all;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.warning-btn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 12px;
+  background: #ff3344;
+  color: #000;
+  border: none;
+  font-weight: bold;
+  font-size: 14px;
+  font-family: 'DungGeunMo', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: 0.2s;
+}
+.warning-btn:hover {
+  background: #fff;
+  color: #ff3344;
+  box-shadow: 0 0 10px #fff;
+}
+
+    
 
 /* ---------- TITLE ---------- */
 #screen-title{
@@ -615,20 +676,19 @@ body{
 </head>
 <body>
 <div id="app">
-      <div class="screen active" id="screen-warning">
+        <div class="screen active" id="screen-warning">
     <div class="warning-box">
-      <div class="warning-title">WARNING</div>
+      <div class="warning-title">[ WARNING ]</div>
       <div class="warning-body">
-        This game contains elements of psychological tension, noise visuals, and flashing effects.<br><br>
-        • Uncontrollable crying or confusion<br>
-        • Heart palpitations &amp; disorientation<br>
-        • Memory distortion of threshold<br><br>
-        These warnings should not be taken lightly.<br>
-        <b>Please play responsibly.</b>
+        본 작품은 15세 이상 이용가를 권장하며, 플레이어에 따라 트러블이나 불쾌감을 유발할 수 있는 다수의 민감한 요소가 포함되어 있습니다.<br><br>
+        • 욕설, 폭력 및 유혈 표현, 약물 관련 언급, 우울증·자살 암시<br>
+        • 제작자의 강한 주관 및 호불호 요소, 특정 성적 취향/페티시 연출, 심한 캐릭터 성격 파괴(개붕), 작화 기복, 개연성 부족 등<br><br>
+        상기 요소에 민감하시거나 거부감이 있으신 분은 플레이에 각별히 유의해 주시기 바랍니다.
       </div>
-      <button class="warning-btn" onclick="acceptWarning()">[ 확인 / CONTINUE ]</button>
+      <button class="warning-btn" onclick="acceptWarning()">[ 확인 및 진행 ]</button>
     </div>
   </div>
+
 
   <!-- ===================== TITLE ===================== -->
   <div class="screen" id="screen-title">
