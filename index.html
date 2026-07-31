@@ -1164,8 +1164,9 @@ function skipTyping(){
     if(playState.mode === 'reaction'){
       document.getElementById('dText').textContent = playState.pendingReaction || '';
     } else {
-      document.getElementById('dText').textContent = parseTextPlayerName(currentScene().text || '');
-      if(currentScene().type === 'choice'){ showChoices(); }
+      const sceneText = currentScene() ? (currentScene().text || '') : '';
+      document.getElementById('dText').textContent = parseTextPlayerName(sceneText);
+      if(currentScene() && currentScene().type === 'choice'){ showChoices(); }
     }
     return true;
   }
