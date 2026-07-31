@@ -263,6 +263,73 @@ body{
 .ending-btns button{flex:1;padding:12px 0;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,0.04);color:#fff;font-size:12.5px;cursor:pointer;}
 .ending-btns button.primary{background:var(--accent);border-color:var(--accent);color:#100c1e;font-weight:700;}
 
+  /* ---------- ACCORDION EPISODE LIST ---------- */
+.ep-card-container {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel2);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.ep-card-container.open {
+  border-color: var(--accent-dim);
+}
+.ep-card-container .ep-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.ep-card-container .ep-card:hover {
+  transform: none;
+}
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0, 1, 0, 1);
+  background: rgba(10, 10, 16, 0.4);
+  border-top: 1px solid transparent;
+}
+.ep-card-container.open .accordion-content {
+  max-height: 2000px; /* 에피소드 목록이 충분히 펼쳐지도록 지정 */
+  transition: max-height 0.5s ease-in-out;
+  border-top-color: var(--line);
+}
+.sub-ep-list {
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sub-ep-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: .2s;
+}
+.sub-ep-card:hover {
+  border-color: var(--accent);
+  transform: translateX(3px);
+}
+.sub-ep-card .sub-ep-num {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: .12em;
+}
+.sub-ep-card h4 {
+  margin: 4px 0 2px;
+  font-size: 14.5px;
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 600;
+}
+.sub-ep-card p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
 /* ---------- ADMIN ---------- */
 .admin-pass{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:0 30px;text-align:center;}
 .admin-pass input{
@@ -376,9 +443,9 @@ body{
       <div class="title-threshold threshold"></div>
       <div class="title-sub serif">문턱 너머의 사람들</div>
       <div class="title-menu">
-        <button class="tbtn" onclick="nav('plotList')">에피소드 목록</button>
-        <button class="tbtn" onclick="nav('charList')">캐릭터 프로필</button>
-        <button class="tbtn" onclick="nav('gallery')">갤러리 / 엔딩 수집</button>
+        <button class="tbtn" onclick="nav('plotList')">시작하기</button>
+        <button class="tbtn" onclick="nav('charList')">프로필</button>
+        <button class="tbtn" onclick="nav('gallery')">갤러리</button>
         <button class="tbtn ghost" onclick="openAdminLogin()">관리자 모드</button>
       </div>
     </div>
@@ -614,44 +681,100 @@ function toast(msg){
 }
 
 /* ============================================================
-   Plot List (플롯/세계관 선택) → Episode List (하위 에피소드)
+   Plot List (플롯 아코디언 UI 구현)
 ============================================================ */
-let currentPlotId = undefined; // undefined: 아직 선택 안 됨 / '' : 미분류 그룹 / 그 외: 특정 플롯 id
-
 function renderPlotList(){
-  const c=document.getElementById('plotListContainer');
-  c.innerHTML='';
-  const plots=DB.plots||[];
-  const unclassifiedCount = DB.episodes.filter(ep=>!ep.plotId || !getPlot(ep.plotId)).length;
-  if(plots.length===0 && unclassifiedCount===0){
-    c.innerHTML='<div class="empty-note">등록된 플롯(세계관)이 없습니다.</div>';
+  const c = document.getElementById('plotListContainer');
+  c.innerHTML = '';
+  const plots = DB.plots || [];
+  const unclassified = DB.episodes.filter(ep => !ep.plotId || !getPlot(ep.plotId));
+  
+  if(plots.length === 0 && unclassified.length === 0){
+    c.innerHTML = '<div class="empty-note">등록된 플롯(세계관)이 없습니다.</div>';
     return;
   }
-  plots.forEach(pl=>{
-    const epCount=DB.episodes.filter(e=>e.plotId===pl.id).length;
-    const div=document.createElement('div');
-    div.className='ep-card';
-    div.onclick=()=>openPlot(pl.id);
-    div.innerHTML=`<div class="ep-num">PLOT</div>
-      <h3 class="serif">${pl.title}</h3>
-      <p>${(pl.worldview||'').slice(0,90)}${(pl.worldview||'').length>90?'…':''}</p>
-      <div class="ep-chars"><span class="ep-chip">${epCount}개 에피소드</span></div>`;
-    c.appendChild(div);
+
+  // 1. 등록된 플롯 목록 아코디언 렌더링
+  plots.forEach(pl => {
+    const epList = DB.episodes.filter(e => e.plotId === pl.id);
+    const container = document.createElement('div');
+    container.className = 'ep-card-container';
+    container.id = 'plot-card-' + pl.id;
+
+    let subEpisodesHtml = '';
+    if(epList.length === 0) {
+      subEpisodesHtml = '<div class="empty-note" style="padding:16px 0;">이 세계관에 속한 에피소드가 없습니다.</div>';
+    } else {
+      subEpisodesHtml = epList.map((ep, i) => {
+        return `<div class="sub-ep-card" onclick="event.stopPropagation(); openPlayerSelect('${ep.id}')">
+          <div class="sub-ep-num">EPISODE ${String(i + 1).padStart(2, '0')}</div>
+          <h4 class="serif">${ep.title}</h4>
+          <p>${ep.description || ''}</p>
+        </div>`;
+      }).join('');
+    }
+
+    container.innerHTML = `
+      <div class="ep-card" onclick="togglePlotAccordion('${pl.id}')">
+        <div class="ep-num">PLOT</div>
+        <h3 class="serif">${pl.title}</h3>
+        <p>${(pl.worldview || '').slice(0, 90)}${(pl.worldview || '').length > 90 ? '…' : ''}</p>
+        <div class="ep-chars">
+          <span class="ep-chip" style="color:var(--accent); border-color:var(--accent-dim);">${epList.length}개 에피소드 ▾</span>
+        </div>
+      </div>
+      <div class="accordion-content">
+        <div class="sub-ep-list">${subEpisodesHtml}</div>
+      </div>
+    `;
+    c.appendChild(container);
   });
-  if(unclassifiedCount>0){
-    const div=document.createElement('div');
-    div.className='ep-card';
-    div.onclick=()=>openPlot('');
-    div.innerHTML=`<div class="ep-num">PLOT</div>
-      <h3 class="serif">미분류 에피소드</h3>
-      <p>특정 플롯에 속하지 않은 에피소드 모음입니다.</p>
-      <div class="ep-chars"><span class="ep-chip">${unclassifiedCount}개 에피소드</span></div>`;
-    c.appendChild(div);
+
+  // 2. 미분류 에피소드 아코디언 렌더링
+  if(unclassified.length > 0){
+    const container = document.createElement('div');
+    container.className = 'ep-card-container';
+    container.id = 'plot-card-unclassified';
+
+    const subEpisodesHtml = unclassified.map((ep, i) => {
+      return `<div class="sub-ep-card" onclick="event.stopPropagation(); openPlayerSelect('${ep.id}')">
+        <div class="sub-ep-num">EPISODE ${String(i + 1).padStart(2, '0')}</div>
+        <h4 class="serif">${ep.title}</h4>
+        <p>${ep.description || ''}</p>
+      </div>`;
+    }).join('');
+
+    container.innerHTML = `
+      <div class="ep-card" onclick="togglePlotAccordion('unclassified')">
+        <div class="ep-num">PLOT</div>
+        <h3 class="serif">미분류 에피소드</h3>
+        <p>특정 플롯에 속하지 않은 에피소드 모음입니다.</p>
+        <div class="ep-chars">
+          <span class="ep-chip" style="color:var(--accent); border-color:var(--accent-dim);">${unclassified.length}개 에피소드 ▾</span>
+        </div>
+      </div>
+      <div class="accordion-content">
+        <div class="sub-ep-list">${subEpisodesHtml}</div>
+      </div>
+    `;
+    c.appendChild(container);
   }
 }
-function openPlot(plotId){
-  currentPlotId = plotId;
-  nav('episodeList');
+
+function togglePlotAccordion(plotId){
+  const targetId = 'plot-card-' + plotId;
+  const targetEl = document.getElementById(targetId);
+  const isOpen = targetEl.classList.contains('open');
+
+  // 다른 열린 아코디언 닫기
+  document.querySelectorAll('.ep-card-container').forEach(el => {
+    el.classList.remove('open');
+  });
+
+  // 클릭한 카드토글
+  if(!isOpen && targetEl){
+    targetEl.classList.add('open');
+  }
 }
 
 /* ============================================================
@@ -886,7 +1009,7 @@ function startEpisode(epId){
   const ep=getEp(epId); if(!ep) return;
   playState={ ep, sceneIndex:0, score:0, choiceCount:0, log:[], auto:false, typing:null, mode:'scene', pendingReaction:'' };
   nav('play');
-  document.getElementById('choiceLayer').classList.remove('active');
+  document.getElementById('choiceLayer').classList.remove('active');s
   toggleLog(false);
   renderScene();
 }
@@ -900,54 +1023,86 @@ function exitToTitle(){
 function currentScene(){ return playState.ep.scenes[playState.sceneIndex]; }
 
 function renderScene(){
-  const scene=currentScene();
+  const scene = currentScene();
   if(!scene){ finishEpisode(); return; }
 
-  playState.mode='scene';
-  playState.pendingReaction='';
+  playState.mode = 'scene';
+  playState.pendingReaction = '';
 
+  // [버그 수정 3-1] 장면 배경(sc.bg) 우선 적용 -> 없을 경우 에피소드 기본 배경(ep.bgDefault) 사용
   const bgImg = scene.bg || playState.ep.bgDefault || '';
-  document.getElementById('stageBg').style.backgroundImage = `url('${bgImg||ph('배경 없음',780,1200)}')`;
+  document.getElementById('stageBg').style.backgroundImage = bgImg ? `url('${bgImg}')` : `url('${ph('배경 없음', 780, 1200)}')`;
 
-  const charEl=document.getElementById('stageChar');
-  if(scene.character){
-    // 장면에 등장 캐릭터가 지정되어 있으면, 캐릭터 프로필에 등록된 스탠딩 일러스트가 자동으로 연동되어 노출된다.
-    const ch=getChar(scene.character);
-    const img = (ch&&ch.image) || ph(ch?ch.name:'캐릭터',600,900);
-    charEl.style.backgroundImage=`url('${img}')`;
-    charEl.classList.remove('hidden-char');
+  // [버그 수정 2] 캐릭터 스탠딩 이미지 자동 연동 및 우선순위 적용
+  const charEl = document.getElementById('stageChar');
+  const ch = scene.character ? getChar(scene.character) : null;
+  
+  if(ch || scene.character) {
+    const standingImg = (scene.charImage || (ch && ch.image)) || '';
+    
+    if(standingImg) {
+      charEl.style.backgroundImage = `url('${standingImg}')`;
+      charEl.classList.remove('hidden-char');
+    } else {
+      charEl.style.backgroundImage = `url('${ph(ch ? ch.name : '캐릭터', 600, 900)}')`;
+      charEl.classList.remove('hidden-char');
+    }
   } else {
-    // 등장 캐릭터가 '(없음)'인 경우 스탠딩 일러스트를 완전히 숨긴다.
     charEl.classList.add('hidden-char');
-    charEl.style.backgroundImage='none';
+    charEl.style.backgroundImage = 'none';
   }
 
-  document.getElementById('nameTag').textContent = displayName(scene.speaker) || '???';
-  document.getElementById('nameTag').style.visibility = scene.speaker ? 'visible':'hidden';
+  // [버그 수정 3-2] 화자 이름 연동 ('나' -> 주인공 이름)
+  const speakerName = displayName(scene.speaker);
+  document.getElementById('nameTag').textContent = speakerName || '???';
+  document.getElementById('nameTag').style.visibility = scene.speaker ? 'visible' : 'hidden';
 
-  typeText(scene.text||'');
+  // [버그 수정 3-2] 대사본문 이름 치환 적용
+  const parsedText = parseTextPlayerName(scene.text || '');
+  typeText(parsedText);
 
-  const cl=document.getElementById('choiceLayer');
+  const cl = document.getElementById('choiceLayer');
   cl.classList.remove('active');
-  cl.innerHTML='';
+  cl.innerHTML = '';
 
-  playState.log.push({who:displayName(scene.speaker)||'', text:scene.text||''});
+  playState.log.push({ who: speakerName || '', text: parsedText });
 }
 
-/* 선택 후 캐릭터 반응 대사 출력 (다음 장면으로 넘어가기 전 단계) */
+/* 대사 텍스트 내의 화자/플레이어 이름 변환 헬퍼 */
+function parseTextPlayerName(text) {
+  if(!text) return '';
+  return text.replace(/\{player\}/g, currentPlayer.name || '나');
+}
+
 function showReaction(opt){
-  const scene=currentScene();
-  playState.mode='reaction';
-  const reactionText = (opt.reaction && opt.reaction.trim()) ? opt.reaction : '(...)';
+  const scene = currentScene();
+  playState.mode = 'reaction';
+  
+  const rawReaction = (opt.reaction && opt.reaction.trim()) ? opt.reaction : '(...)';
+  const reactionText = parseTextPlayerName(rawReaction);
   playState.pendingReaction = reactionText;
 
-  document.getElementById('nameTag').textContent = displayName(scene.speaker) || '???';
-  document.getElementById('nameTag').style.visibility = scene.speaker ? 'visible':'hidden';
+  const speakerName = displayName(scene.speaker);
+  document.getElementById('nameTag').textContent = speakerName || '???';
+  document.getElementById('nameTag').style.visibility = scene.speaker ? 'visible' : 'hidden';
 
   typeText(reactionText);
-  playState.log.push({who:displayName(scene.speaker)||'', text:reactionText});
+  playState.log.push({ who: speakerName || '', text: reactionText });
 }
 
+function skipTyping(){
+  if(playState.typing){
+    clearInterval(playState.typing); playState.typing = null;
+    if(playState.mode === 'reaction'){
+      document.getElementById('dText').textContent = playState.pendingReaction || '';
+    } else {
+      document.getElementById('dText').textContent = parseTextPlayerName(currentScene().text || '');
+      if(currentScene().type === 'choice'){ showChoices(); }
+    }
+    return true;
+  }
+  return false;
+}
 function typeText(full){
   const el=document.getElementById('dText');
   if(playState.typing) clearInterval(playState.typing);
