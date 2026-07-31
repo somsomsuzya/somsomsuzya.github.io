@@ -430,6 +430,73 @@ body{
   z-index:200;opacity:0;pointer-events:none;transition:.3s;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+/* ---------- ACCORDION EPISODE LIST ---------- */
+.ep-card-container {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-panel2);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.ep-card-container.open {
+  border-color: var(--accent-dim);
+}
+.ep-card-container .ep-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+.ep-card-container .ep-card:hover {
+  transform: none;
+}
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0, 1, 0, 1);
+  background: rgba(10, 10, 16, 0.4);
+  border-top: 1px solid transparent;
+}
+.ep-card-container.open .accordion-content {
+  max-height: 2000px;
+  transition: max-height 0.5s ease-in-out;
+  border-top-color: var(--line);
+}
+.sub-ep-list {
+  padding: 12px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sub-ep-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: .2s;
+}
+.sub-ep-card:hover {
+  border-color: var(--accent);
+  transform: translateX(3px);
+}
+.sub-ep-card .sub-ep-num {
+  font-family: 'Noto Serif KR', serif;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: .12em;
+}
+.sub-ep-card h4 {
+  margin: 4px 0 2px;
+  font-size: 14.5px;
+  font-family: 'Noto Serif KR', serif;
+  font-weight: 600;
+}
+.sub-ep-card p {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
 </style>
 </head>
 <body>
@@ -1000,7 +1067,8 @@ function displayName(speaker){
   return speaker;
 }
 
-/* ============================================================
+
+  /* ============================================================
    Play Engine
 ============================================================ */
 let playState=null; // {ep, sceneIndex, score, maxScore, log:[], autoTimer, typing}
@@ -1009,7 +1077,7 @@ function startEpisode(epId){
   const ep=getEp(epId); if(!ep) return;
   playState={ ep, sceneIndex:0, score:0, choiceCount:0, log:[], auto:false, typing:null, mode:'scene', pendingReaction:'' };
   nav('play');
-  document.getElementById('choiceLayer').classList.remove('active');s
+  document.getElementById('choiceLayer').classList.remove('active');
   toggleLog(false);
   renderScene();
 }
@@ -1036,10 +1104,10 @@ function renderScene(){
   // [버그 수정 2] 캐릭터 스탠딩 이미지 자동 연동 및 우선순위 적용
   const charEl = document.getElementById('stageChar');
   const ch = scene.character ? getChar(scene.character) : null;
-  
+
   if(ch || scene.character) {
     const standingImg = (scene.charImage || (ch && ch.image)) || '';
-    
+
     if(standingImg) {
       charEl.style.backgroundImage = `url('${standingImg}')`;
       charEl.classList.remove('hidden-char');
@@ -1077,7 +1145,7 @@ function parseTextPlayerName(text) {
 function showReaction(opt){
   const scene = currentScene();
   playState.mode = 'reaction';
-  
+
   const rawReaction = (opt.reaction && opt.reaction.trim()) ? opt.reaction : '(...)';
   const reactionText = parseTextPlayerName(rawReaction);
   playState.pendingReaction = reactionText;
