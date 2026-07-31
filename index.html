@@ -94,10 +94,14 @@ body{
   background: #000;
   justify-content: center;
   align-items: center;
-  padding: 24px;
+  padding: 20px;
   text-align: center;
   z-index: 100;
 }
+#screen-warning.active {
+  display: flex;
+}
+
 .warning-box {
   border: 2px solid #ff3344;
   box-shadow: 0 0 15px rgba(255, 51, 68, 0.4);
@@ -901,6 +905,8 @@ function migrateDB(d){
 }
 
 let DB = loadData();
+// 기존 변수들 아래에 추가
+let currentPlotId = null;
 function loadData(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY);
@@ -2182,15 +2188,17 @@ function copyEmbedCode(){
    Warning Screen Controller
 ============================================================ */
 function acceptWarning() {
-  document.getElementById('screen-warning').classList.remove('active');
-  nav('title');
+  const warningEl = document.getElementById('screen-warning');
+  warningEl.classList.remove('active');
+  warningEl.style.display = 'none'; // 경고창 화면을 강제로 숨김 처리
+  nav('title'); // 타이틀 화면으로 이동
 }
 
 /* ============================================================
    init
 ============================================================ */
-// 경고창(screen-warning) 화면에서 시작하므로 초기 nav('title')은 주석 처리합니다.
 // nav('title');
+
 </script>
 
 </body>
