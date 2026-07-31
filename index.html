@@ -2179,14 +2179,20 @@ function copyEmbedCode(){
 }
 
 /* ============================================================
-   init
+   Warning Screen Controller
 ============================================================ */
-nav('title');자동 타이틀 진입 주석 처리
-</script>
-    function acceptWarning() {
+function acceptWarning() {
   document.getElementById('screen-warning').classList.remove('active');
   nav('title');
 }
 
+/* ============================================================
+   init
+============================================================ */
+// 경고창(screen-warning)이 active 상태로 시작하므로 자동 nav('title')은 주석 처리합니다.
+// nav('title');
+</script>
+
 </body>
+
 </html>
