@@ -16,22 +16,24 @@
 }
 
 :root{
-  --bg-deep:#0a0a10;
-  --bg-panel:#14141c;
-  --bg-panel2:#1c1c28;
-  --line:#2a2a38;
-  --text-main:#eae8f0;
-  --text-dim:#8f8ba3;
-  --text-faint:#5f5c72;
-  --accent:#a78bfa;
-  --accent-dim:#7c6bb8;
-  --gold:#d9b16c;
-  --good:#8fd9c4;
-  --bad:#d9707a;
-  --radius:14px;
+  --bg-deep:#030112;
+  --bg-panel:#090629;
+  --bg-panel2:#120c45;
+  --line:#2c389c;
+  --line-bright:#4a62ff;
+  --text-main:#eaf0ff;
+  --text-dim:#8d9eff;
+  --text-faint:#4f5a9e;
+  --accent:#3b82ff;
+  --accent-neon:#00f0ff;
+  --gold:#ffd000;
+  --good:#00ffa3;
+  --bad:#ff3366;
+  --radius:4px; /* 쯔꾸르 느낌을 위해 둥근 모서리를 직각에 가깝게 변경 */
   --safe-top: env(safe-area-inset-top,0px);
   --safe-bottom: env(safe-area-inset-bottom,0px);
 }
+
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;height:100%;background:#000;}
 body{
@@ -73,6 +75,109 @@ body{
   content:''; position:absolute; top:-1px; left:0; right:0; height:3px;
   background:linear-gradient(90deg, transparent, var(--gold), transparent);
   filter:blur(3px); opacity:.5;
+}
+/* ---------- CRT SCANLINE EFFECT ---------- */
+#app::before {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  z-index: 99;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ---------- WARNING SCREEN ---------- */
+#screen-warning {
+  background: #000;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+  z-index: 100;
+}
+.warning-box {
+  border: 2px solid #ff3344;
+  box-shadow: 0 0 15px rgba(255, 51, 68, 0.4);
+  background: rgba(20, 0, 5, 0.85);
+  padding: 24px 20px;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: pulseBorder 2s infinite alternate;
+}
+.warning-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ff3344;
+  text-shadow: 2px 2px #550000, -1px -1px #ff8899;
+  letter-spacing: 0.15em;
+  animation: glitchText 1.5s infinite;
+}
+.warning-body {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #ffb3ba;
+  text-align: left;
+  word-break: keep-all;
+}
+.warning-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px;
+  background: #ff3344;
+  color: #000;
+  border: none;
+  font-weight: bold;
+  font-family: 'DungGeunMo', sans-serif;
+  cursor: pointer;
+  letter-spacing: 0.1em;
+  transition: 0.2s;
+}
+.warning-btn:hover {
+  background: #fff;
+  color: #ff3344;
+  box-shadow: 0 0 10px #fff;
+}
+
+/* ---------- GLITCH & RETRO ANIMATIONS ---------- */
+@keyframes glitchText {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+@keyframes pulseBorder {
+  from { border-color: #ff3344; box-shadow: 0 0 8px rgba(255, 51, 68, 0.4); }
+  to { border-color: #ff6677; box-shadow: 0 0 18px rgba(255, 51, 68, 0.8); }
+}
+
+/* ---------- RPG TXT BOX & BUTTONS ---------- */
+.dialogue-box {
+  border-top: 3px solid var(--line-bright) !important;
+  background: rgba(9, 6, 41, 0.95) !important;
+}
+.tbtn, .btn-main {
+  border: 1px solid var(--line-bright) !important;
+  background: var(--bg-panel2) !important;
+  box-shadow: 2px 2px 0px var(--line);
+  transition: all 0.1s;
+}
+.tbtn:hover, .btn-main:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px var(--accent-neon);
+  border-color: var(--accent-neon) !important;
+  color: var(--accent-neon) !important;
+}
+.tbtn:active, .btn-main:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px var(--line);
 }
 
 /* ---------- TITLE ---------- */
@@ -510,9 +615,23 @@ body{
 </head>
 <body>
 <div id="app">
+      <div class="screen active" id="screen-warning">
+    <div class="warning-box">
+      <div class="warning-title">WARNING</div>
+      <div class="warning-body">
+        This game contains elements of psychological tension, noise visuals, and flashing effects.<br><br>
+        • Uncontrollable crying or confusion<br>
+        • Heart palpitations &amp; disorientation<br>
+        • Memory distortion of threshold<br><br>
+        These warnings should not be taken lightly.<br>
+        <b>Please play responsibly.</b>
+      </div>
+      <button class="warning-btn" onclick="acceptWarning()">[ 확인 / CONTINUE ]</button>
+    </div>
+  </div>
 
   <!-- ===================== TITLE ===================== -->
-  <div class="screen active" id="screen-title">
+  <div class="screen" id="screen-title">
     <div class="title-wrap">
       <div class="title-eyebrow">Visual Novel</div>
       <div class="title-main serif">LIMEN</div>
@@ -2002,7 +2121,12 @@ function copyEmbedCode(){
 /* ============================================================
    init
 ============================================================ */
-nav('title');
+nav('title');자동 타이틀 진입 주석 처리
 </script>
+    function acceptWarning() {
+  document.getElementById('screen-warning').classList.remove('active');
+  nav('title');
+}
+
 </body>
 </html>
