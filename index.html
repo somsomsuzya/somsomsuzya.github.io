@@ -1046,7 +1046,6 @@ function renderEpisodeList(){
     ? DB.episodes
     : DB.episodes.filter(ep => ep.plotId===plotId);
   if(list.length===0){ c.innerHTML='<div class="empty-note">등록된 에피소드가 없습니다.</div>'; return; }
-  // ...
 
   list.forEach((ep,i)=>{
     const div=document.createElement('div');
@@ -1581,14 +1580,13 @@ function renderAdminChars(){
   html+=`<button class="btn-outline" onclick="editChar(null)">+ 새 캐릭터 추가</button>`;
   html+=`<div id="charForm"></div>`;
   body.innerHTML=html;
-  if(adminState.editingCharId!==undefined && adminState._showCharForm) renderCharForm(adminState.editingCharId);
 }
 
 function editChar(id){
   adminState.editingCharId=id;
-  adminState._showCharForm=true;
   renderCharForm(id);
 }
+
 
 function renderCharForm(id){
   const ch = id ? getChar(id) : {id:null, name:'', age:'', height:'', image:'', defaultStanding:'', standings:[], intro:'', worldview:''};
@@ -2193,7 +2191,6 @@ function handleImageUpload(evt){
   };
   reader.readAsDataURL(file);
 }
-
 /* ============================================================
    init
 ============================================================ */
@@ -2202,9 +2199,10 @@ function confirmWarning() {
   nav('title');
 }
 
-// 최초 진입 시 경고 화면(warning)을 표시하도록 실행
+// 페이지 로드 시 첫 화면(경고 화면) 활성화
 nav('warning');
 </script>
-
 </body>
+
+
 </html>
