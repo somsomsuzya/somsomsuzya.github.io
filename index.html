@@ -505,14 +505,193 @@ body{
   color: var(--text-dim);
   line-height: 1.4;
 }
+/* ===================== WARNING SCREEN STYLES ===================== */
+#screen-warning {
+  background: radial-gradient(circle at center, #1a080a 0%, #050508 100%);
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* 어두운 노이즈 & 스캔라인 겹침 효과 */
+#screen-warning::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.warning-container {
+  position: relative;
+  z-index: 2;
+  max-width: 580px;
+  width: 100%;
+  background: rgba(12, 10, 16, 0.88);
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  box-shadow: 0 0 30px rgba(185, 28, 28, 0.25), inset 0 0 15px rgba(0, 0, 0, 0.8);
+  border-radius: 16px;
+  padding: 32px 28px;
+  backdrop-filter: blur(8px);
+  animation: warningFadeIn 0.8s ease-out;
+}
+
+@keyframes warningFadeIn {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.warning-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.warning-title {
+  display: inline-block;
+  font-family: 'Noto Serif KR', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #ef4444;
+  letter-spacing: 4px;
+  padding: 6px 16px;
+  border-top: 2px solid #dc2626;
+  border-bottom: 2px solid #dc2626;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
+  animation: warningPulse 2.5s infinite alternate;
+}
+
+@keyframes warningPulse {
+  0% { text-shadow: 0 0 8px rgba(239, 68, 68, 0.4); border-color: rgba(220, 38, 38, 0.6); }
+  100% { text-shadow: 0 0 18px rgba(239, 68, 68, 0.9); border-color: rgba(239, 68, 68, 1); }
+}
+
+.warning-body {
+  color: #d1d5db;
+  font-size: 14.5px;
+  line-height: 1.75;
+  word-break: keep-all;
+}
+
+.warning-intro {
+  font-weight: 500;
+  color: #f3f4f6;
+  margin-bottom: 18px;
+  font-size: 15px;
+  text-align: justify;
+}
+
+.warning-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px 0;
+  background: rgba(20, 15, 20, 0.6);
+  border-left: 3px solid #b91c1c;
+  border-radius: 4px 8px 8px 4px;
+  padding: 14px 16px;
+}
+
+.warning-list li {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 10px;
+  color: #e5e7eb;
+}
+
+.warning-list li:last-child {
+  margin-bottom: 0;
+}
+
+.warning-list li::before {
+  content: "■";
+  position: absolute;
+  left: 0;
+  top: 1px;
+  color: #ef4444;
+  font-size: 10px;
+}
+
+.warning-footer-text {
+  color: #9ca3af;
+  font-size: 13.5px;
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.warning-action {
+  text-align: center;
+}
+
+.warning-btn {
+  background: linear-gradient(135deg, #991b1b 0%, #b91c1c 50%, #7f1d1d 100%);
+  color: #ffffff;
+  border: 1px solid #ef4444;
+  padding: 14px 42px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 30px;
+  cursor: pointer;
+  letter-spacing: 1.5px;
+  box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
+  transition: all 0.25s ease;
+  width: 100%;
+  max-width: 280px;
+}
+
+.warning-btn:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+  box-shadow: 0 0 22px rgba(239, 68, 68, 0.8);
+  transform: translateY(-2px);
+}
+
+.warning-btn:active {
+  transform: translateY(1px);
+}
+
     
 </style>
 </head>
 <body>
 <div id="app">
+  <div class="screen active" id="screen-warning">
+    <div class="warning-container">
+      <div class="warning-header">
+        <div class="warning-title">[ WARNING ]</div>
+      </div>
+      
+      <div class="warning-body">
+        <p class="warning-intro">
+          본 게임은 15세 이상 이용가를 권장하며, 개인에 따라 불쾌감을 유발할 수 있는 민감한 요소가 다수 포함되어 있습니다.
+        </p>
+        
+        <ul class="warning-list">
+          <li>욕설, 폭력 및 유혈 표현, 약물 관련 언급, 우울증·자살 암시 가능성</li>
+          <li>제작자의 강한 주관 및 호불호 요소, 특정 성적 취향 포함, 캐릭터 성격 파괴, 작화 기복, 개연성 부족 등</li>
+        </ul>
+        
+        <p class="warning-footer-text">
+          상기 요소에 민감하시거나 거부감이 있으신 분은 플레이에 각별히 유의해 주시기 바랍니다.
+        </p>
+      </div>
+
+      <div class="warning-action">
+        <button class="warning-btn" onclick="confirmWarning()">확인 및 동의</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===================== TITLE ===================== -->
-  <div class="screen active" id="screen-title">
+  <div class="screen" id="screen-title">
     <div class="title-wrap">
       <div class="title-eyebrow">Visual Novel</div>
       <div class="title-main serif">LIMEN</div>
@@ -2004,5 +2183,9 @@ function copyEmbedCode(){
 ============================================================ */
 nav('title');
 </script>
+function confirmWarning() {
+  // 경고 확인 후 타이틀 화면으로 자연스럽게 전환
+  nav('title');
+}
 </body>
 </html>
