@@ -1624,7 +1624,7 @@ function renderCharForm(id){
     <div class="standing-item-row" id="st_row_${idx}" style="background:var(--bg-panel); padding:10px; border-radius:10px; border:1px solid var(--line); margin-bottom:8px;">
       <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
         <input type="text" class="st-name" value="${st.name || ''}" placeholder="표정 이름 (예: 웃음, 화남)" style="flex:1;">
-        <button type="button" class="btn-outline btn-danger" style="width:auto; padding:6px 10px; margin:0;" onclick="removeStandingRow(${idx})">삭제</button>
+        <button type="button" class="warning-btn" onclick="confirmWarning(); return false;">확인 및 동의</button>
       </div>
       <div class="upload-box st-upload-box" id="st_box_${idx}" style="background-image:url('${st.image || ''}'); height:80px;">
         <span>표정 스탠딩 선택</span>
@@ -2223,16 +2223,29 @@ function handleImageUpload(evt){
    init
 ============================================================ */
 function confirmWarning() {
-  // 경고 화면의 active 클래스를 완전히 제거한 후 타이틀 화면으로 이동
-  const warningScreen = document.getElementById('screen-warning');
-  if(warningScreen) {
-    warningScreen.classList.remove('active');
+  const warningEl = document.getElementById('screen-warning');
+  if (warningEl) {
+    // 1. 경고 화면을 DOM상에서 강제로 완전히 숨김 처리
+    warningEl.classList.remove('active');
+    warningEl.style.display = 'none';
   }
+  // 2. 타이틀 화면으로 이동
   nav('title');
 }
 
-// 페이지 로드 시 첫 화면(경고 화면) 활성화
-nav('warning');
+// DOM이 완전히 로드된 후 이벤트를 직접 binding하여 확실하게 동작 보장
+document.addEventListener('DOMContentLoaded', () => {
+  const warningBtn = document.querySelector('.warning-btn');
+  if (warningBtn) {
+    warningBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      confirmWarning();
+    });
+  }
+  nav('warning');
+});
+
 </script>
 </body>
 
