@@ -2177,6 +2177,19 @@ function copyEmbedCode(){
     document.execCommand('copy'); toast('클립보드에 복사되었습니다');
   }
 }
+function handleImageUpload(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const box = evt.target.closest('.upload-box');
+    if(box){
+      box.style.backgroundImage = `url('${e.target.result}')`;
+      box.dataset.value = e.target.result;
+    }
+  };
+  reader.readAsDataURL(file);
+}
 
 /* ============================================================
    init
@@ -2185,9 +2198,6 @@ function confirmWarning() {
   // 경고 확인 후 타이틀 화면으로 자연스럽게 전환
   nav('title');
 }
-
-/* 초기 화면 지정 (경고 화면이 먼저 뜨도록 설정) */
-// nav('title'); 주석 처리
 </script>
 </body>
 </html>
