@@ -621,7 +621,7 @@ body{
 }
 
 
-/* 어두운 노이즈 & 스캔라인 겹침 효과 */
+/* 어두운 노이즈 & 스캔라인 겹침 효과 (pointer-events: none 필수) */
 #screen-warning::before {
   content: "";
   position: absolute;
@@ -637,19 +637,21 @@ body{
   z-index: 1;
 }
 
+/* 경고창 컨테이너 클릭 가능하도록 z-index 보장 */
 .warning-container {
   position: relative;
-  z-index: 2;
+  z-index: 10;
   max-width: 580px;
   width: 100%;
-  background: rgba(12, 10, 16, 0.88);
-  border: 1px solid rgba(220, 38, 38, 0.4);
-  box-shadow: 0 0 30px rgba(185, 28, 28, 0.25), inset 0 0 15px rgba(0, 0, 0, 0.8);
-  border-radius: 16px;
+  background: rgba(9, 13, 34, 0.92);
+  border: 1px solid var(--accent-light);
+  box-shadow: 0 0 30px rgba(0, 56, 255, 0.4), inset 0 0 15px rgba(0, 216, 255, 0.1);
+  border-radius: 0px;
   padding: 32px 28px;
   backdrop-filter: blur(8px);
   animation: warningFadeIn 0.8s ease-out;
 }
+
 
 @keyframes warningFadeIn {
   from { opacity: 0; transform: scale(0.96) translateY(10px); }
@@ -2299,7 +2301,11 @@ function handleImageUpload(evt){
    init
 ============================================================ */
 function confirmWarning() {
-  // 경고 확인 후 타이틀 화면으로 자연스럽게 전환
+  // 경고 화면의 active 클래스를 완전히 제거한 후 타이틀 화면으로 이동
+  const warningScreen = document.getElementById('screen-warning');
+  if(warningScreen) {
+    warningScreen.classList.remove('active');
+  }
   nav('title');
 }
 
