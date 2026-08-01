@@ -1038,13 +1038,16 @@ function togglePlotAccordion(plotId){
 function renderEpisodeList(){
   const c=document.getElementById('epListContainer');
   c.innerHTML='';
-  const plot = currentPlotId ? getPlot(currentPlotId) : null;
+  const plotId = window.currentPlotId || '';
+  const plot = plotId ? getPlot(plotId) : null;
   document.getElementById('episodeListTitle').firstChild.textContent = plot ? plot.title : '에피소드';
-  document.getElementById('episodeListSub').textContent = plot ? 'Episode Select' : (currentPlotId==='' ? '미분류 에피소드' : 'Episode Select');
-  const list = currentPlotId===undefined
+  document.getElementById('episodeListSub').textContent = plot ? 'Episode Select' : (plotId==='' ? '미분류 에피소드' : 'Episode Select');
+  const list = !plotId
     ? DB.episodes
-    : DB.episodes.filter(ep => currentPlotId==='' ? (!ep.plotId || !getPlot(ep.plotId)) : ep.plotId===currentPlotId);
+    : DB.episodes.filter(ep => ep.plotId===plotId);
   if(list.length===0){ c.innerHTML='<div class="empty-note">등록된 에피소드가 없습니다.</div>'; return; }
+  // ...
+
   list.forEach((ep,i)=>{
     const div=document.createElement('div');
     div.className='ep-card';
@@ -2198,6 +2201,10 @@ function confirmWarning() {
   // 경고 확인 후 타이틀 화면으로 자연스럽게 전환
   nav('title');
 }
+
+// 최초 진입 시 경고 화면(warning)을 표시하도록 실행
+nav('warning');
 </script>
+
 </body>
 </html>
